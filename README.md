@@ -1,58 +1,137 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# GolBet
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Simulador académico de una casa de apuestas deportivas dedicada al fútbol.
+Los usuarios consultan la cartelera de partidos, revisan las cuotas y apuestan
+con una moneda virtual llamada **FutCoins**. No se maneja dinero real en ningún momento.
 
-## About Laravel
+Proyecto de asignatura desarrollado en PHP con Laravel.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Equipo
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Integrante | GitHub |
+|---|---|
+| Diego Andrés Ospina Mesa | [@do148150-sketch](https://github.com/do148150-sketch) |
+| Santiago Mendoza | [@santimendoza15](https://github.com/santimendoza15) |
+| Nicolás | [@Nicolas-2307](https://github.com/Nicolas-2307) |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Tecnologías
 
-## Learning Laravel
+- PHP 8.3
+- Laravel 13
+- MySQL 8.4 sobre motor InnoDB
+- Blade como motor de plantillas
+- Bootstrap 5 con la plantilla NiceAdmin
+- SweetAlert2 para mensajes y confirmaciones
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Requisitos
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- PHP 8.3 o superior
+- Composer
+- MySQL 8 (por ejemplo con WampServer)
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Instalación
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Clonar el repositorio e instalar las dependencias:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/do148150-sketch/Golbet_PHP.git
+cd Golbet_PHP
+composer install
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Copiar `.env.example` a `.env` y generar la llave de la aplicación:
 
-## Contributing
+```bash
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Crear la base de datos:
 
-## Code of Conduct
+```sql
+CREATE DATABASE golbetdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Ejecutar las migraciones y cargar los datos iniciales:
 
-## Security Vulnerabilities
+```bash
+php artisan migrate --seed
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Levantar el servidor:
 
-## License
+```bash
+php artisan serve
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+La aplicación queda en `http://127.0.0.1:8000`.
+
+> MySQL tiene que estar encendido incluso para abrir la página de inicio:
+> Laravel guarda las sesiones en base de datos (`SESSION_DRIVER=database`).
+
+## Funcionalidad actual
+
+- Dashboard de bienvenida
+- CRUD de equipos: listar, crear, editar y eliminar
+- Carga inicial de 8 equipos de la liga colombiana mediante seeder
+
+## Modelo de datos
+
+### teams
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | bigint unsigned | Clave primaria |
+| `name` | varchar(80) | Único |
+| `city` | varchar(60) | Obligatorio |
+| `crest_url` | varchar(300) | Opcional, URL del escudo |
+| `is_active` | boolean | Por defecto `true` |
+| `created_at` / `updated_at` | timestamp | |
+
+Las tablas `matches`, `bets`, `roles` y `role_user` están contempladas en el
+modelo relacional del proyecto y se implementan en las siguientes entregas.
+
+## Decisiones de diseño
+
+**Borrado lógico.** Eliminar un equipo no destruye la fila: pone `is_active`
+en `false` y el listado filtra por esa columna. Así se conserva el histórico,
+algo necesario cuando los partidos y las apuestas empiecen a referenciar equipos.
+
+**InnoDB forzado.** WampServer trae MyISAM como motor por defecto, que ignora
+las llaves foráneas y limita los índices a 1000 bytes. En `config/database.php`
+se fija `'engine' => 'InnoDB'` para que la configuración viaje en el repositorio
+y no dependa de la máquina de cada integrante.
+
+**Validación en el controlador.** Las reglas se declaran con `Validator::make()`
+dentro de cada acción, con los mensajes en español. Los errores se muestran con
+SweetAlert2 desde `resources/views/layouts/scripts.blade.php`.
+
+**Un archivo de rutas por entidad.** `routes/web.php` incluye los archivos de
+`routes/web/`, uno por cada recurso.
+
+## Estructura
+
+```
+app/
+├── Http/Controllers/
+│   ├── HomeController.php
+│   └── TeamsController.php
+└── Models/
+    └── Team.php
+
+database/
+├── migrations/      Esquema de la base de datos
+└── seeders/         Datos iniciales
+
+resources/views/
+├── layouts/         Plantilla base dividida en parciales
+├── home/
+└── teams/           index, create y edit
+
+routes/
+├── web.php
+└── web/teams.php
+
+public/
+├── assets/          Plantilla NiceAdmin
+└── libs/            jQuery y SweetAlert2
+```

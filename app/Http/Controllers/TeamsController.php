@@ -13,14 +13,12 @@ class TeamsController extends Controller
 {
     public function index() {
 
-        $teams = Team::all();
+        $teams = Team::where('is_active', true)->get();
 
         return view('teams/index', [ 'teams' => $teams ]);
     }
 
     public function create() {
-
-        $teams = Team::all();
 
         return view('teams/create');
     }
@@ -42,13 +40,14 @@ class TeamsController extends Controller
 
         Validator::make($request->all(),
         [
-            'name' => 'required|max:80',
+            'name' => 'required|max:80|unique:teams,name',
             'city' => 'required|max:60',
             'crest_url' => 'nullable|url|max:300'
         ],
         [
             'name.required' => 'El nombre es requerido',
             'name.max' => 'El nombre no puede ser mayor a :max caracteres',
+            'name.unique' => 'Ya existe un equipo con ese nombre',
             'city.required' => 'La ciudad es requerida',
             'city.max' => 'La ciudad no puede ser mayor a :max caracteres',
             'crest_url.url' => 'La URL del escudo no es válida',
@@ -78,7 +77,7 @@ class TeamsController extends Controller
 
         Validator::make($request->all(),
         [
-            'name' => 'required|max:80',
+            'name' => 'required|max:80|unique:teams,name,' . $request->team_id,
             'city' => 'required|max:60',
             'crest_url' => 'nullable|url|max:300',
             'team_id' => 'required|exists:teams,id'
@@ -86,6 +85,7 @@ class TeamsController extends Controller
         [
             'name.required' => 'El nombre es requerido',
             'name.max' => 'El nombre no puede ser mayor a :max caracteres',
+            'name.unique' => 'Ya existe un equipo con ese nombre',
             'city.required' => 'La ciudad es requerida',
             'city.max' => 'La ciudad no puede ser mayor a :max caracteres',
             'crest_url.url' => 'La URL del escudo no es válida',
@@ -125,7 +125,10 @@ class TeamsController extends Controller
                 return redirect()->back();
             }
 
-            $team->delete();
+            // Borrado logico: el registro no se destruye, se desactiva.
+            // El listado solo muestra los equipos con is_active = true.
+            $team->is_active = false;
+            $team->save();
 
             Session::flash('message', [ 'content' => "Equipo eliminado con éxito", 'type' => 'success' ]);
             return redirect()->route('teams.index');
