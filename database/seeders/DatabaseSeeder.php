@@ -23,5 +23,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(TeamSeeder::class);
+        $this->call(PermissionsSeeder::class);
+        $this->call(UserSeeder::class);
     }
 }
