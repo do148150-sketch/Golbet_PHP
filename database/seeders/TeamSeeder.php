@@ -24,6 +24,16 @@ class TeamSeeder extends Seeder
         ];
 
         foreach ($teams as $data) {
+
+            // Guarda de idempotencia: el nombre es unico, asi que correr
+            // el seeder dos veces no debe reventar contra el indice
+            $team = Team::where('name', '=', $data['name'])->first();
+
+            if (!empty($team)) {
+
+                continue;
+            }
+
             $team = new Team();
             $team->name = $data['name'];
             $team->city = $data['city'];

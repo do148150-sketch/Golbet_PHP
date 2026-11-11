@@ -15,12 +15,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Los usuarios reales los crea UserSeeder, con su rol y su contraseña.
+        // El User::factory() de la plantilla se quito: no era idempotente
+        // (fallaba al correr db:seed dos veces) y dejaba una cuenta sin rol.
 
         $this->call(TeamSeeder::class);
         $this->call(PermissionsSeeder::class);
