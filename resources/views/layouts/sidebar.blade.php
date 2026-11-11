@@ -16,6 +16,13 @@
             </a>
         </li>
 
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="{{ route('users.index') }}">
+                <i class="bi bi-people"></i>
+                <span>Usuarios</span>
+            </a>
+        </li>
+
     </ul>
 
 </aside>

@@ -7,3 +7,4 @@ Route::get('/', [HomeController::class, 'index'])->name('home.index');
 
 include('auth.php');
 include('web/teams.php');
+include('web/users.php');
