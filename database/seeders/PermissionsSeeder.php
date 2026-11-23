@@ -20,6 +20,18 @@ class PermissionsSeeder extends Seeder
             ['code' => 'users.show',   'description' => 'Ver Usuarios',     'module' => 'Usuarios'],
             ['code' => 'users.create', 'description' => 'Crear Usuarios',   'module' => 'Usuarios'],
             ['code' => 'users.update', 'description' => 'Editar Usuarios',  'module' => 'Usuarios'],
+            ['code' => 'users.delete', 'description' => 'Desactivar Usuarios', 'module' => 'Usuarios'],
+
+            // Partidos (parte de Diego y cierre de Nico)
+            ['code' => 'matches.show',   'description' => 'Ver Partidos',       'module' => 'Partidos'],
+            ['code' => 'matches.create', 'description' => 'Crear Partidos',     'module' => 'Partidos'],
+            ['code' => 'matches.update', 'description' => 'Editar Partidos',    'module' => 'Partidos'],
+            ['code' => 'matches.delete', 'description' => 'Eliminar Partidos',  'module' => 'Partidos'],
+            ['code' => 'matches.close',  'description' => 'Cerrar Partidos',    'module' => 'Partidos'],
+
+            // Apuestas (parte de Santi)
+            ['code' => 'bets.create',    'description' => 'Realizar Apuestas',  'module' => 'Apuestas'],
+            ['code' => 'bets.show',      'description' => 'Ver Mis Apuestas',   'module' => 'Apuestas'],
         ];
 
         foreach ($permissions as $data) {

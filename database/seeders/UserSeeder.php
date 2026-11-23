@@ -26,10 +26,17 @@ class UserSeeder extends Seeder
             $this->assignPermission($adminRole, $permission);
         }
 
-        // Apostador: only teams.show
-        $teamsShow = Permission::where('code', '=', 'teams.show')->first();
-        if (!empty($teamsShow)) {
-            $this->assignPermission($bettorRole, $teamsShow);
+        // Apostador: consultar equipos y partidos, y apostar.
+        // Nada de crear, editar ni cerrar: eso es del Administrador.
+        $bettorPermissions = ['teams.show', 'matches.show', 'bets.create', 'bets.show'];
+
+        foreach ($bettorPermissions as $code) {
+
+            $permission = Permission::where('code', '=', $code)->first();
+
+            if (!empty($permission)) {
+                $this->assignPermission($bettorRole, $permission);
+            }
         }
 
         // 3. Users
