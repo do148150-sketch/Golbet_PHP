@@ -123,11 +123,13 @@
                         </a>
                     @endif
 
-                    {{-- ===============================================
-                         NICO: aquí van los botones de "Registrar marcador"
-                         y "Cerrar partido (resolver apuestas)".
-                         Condición: RoleHelper::can('matches.close')
-                         =============================================== --}}
+                    {{-- Registrar el marcador y cerrar el partido son una sola
+                         operación: al guardar el marcador se resuelven las apuestas. --}}
+                    @if (RoleHelper::can('matches.close') && $match->status !== GameMatch::FINISHED)
+                        <a href="{{ route('matches.closeForm', $match->id) }}" class="btn btn-danger">
+                            <i class="bi bi-flag-fill"></i> Registrar marcador y cerrar
+                        </a>
+                    @endif
 
                     <a href="{{ route('matches.index') }}" class="btn btn-secondary">Volver</a>
                 </div>

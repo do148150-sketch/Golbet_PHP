@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bet;
 use App\Models\GameMatch;
 use App\Models\Team;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
@@ -204,6 +206,161 @@ class MatchesController extends Controller
             Log::error($ex);
             Session::flash('message', [ 'content' => "Ha ocurrido un error.", 'type' => 'error' ]);
             return redirect()->back();
+        }
+    }
+
+    /**
+     * Formulario para registrar el marcador final y cerrar el partido.
+     */
+    public function closeForm($id) {
+
+        $match = GameMatch::with(['homeTeam', 'awayTeam'])->find($id);
+
+        if (empty($match) || !$match->is_active) {
+
+            Session::flash('message', [ 'content' => "El partido con id '$id' no existe.", 'type' => 'error' ]);
+            return redirect()->route('matches.index');
+        }
+
+        if ($match->status === GameMatch::FINISHED) {
+
+            Session::flash('message', [ 'content' => "Este partido ya fue cerrado y sus apuestas resueltas.", 'type' => 'error' ]);
+            return redirect()->route('matches.show', $match->id);
+        }
+
+        return view('matches/close', [
+            'match'       => $match,
+            'pendingBets' => $match->bets()->where('status', Bet::PENDING)->count(),
+        ]);
+    }
+
+    /**
+     * Registra el marcador final, cierra el partido y resuelve sus apuestas.
+     *
+     * Todo ocurre dentro de una transaccion: si algo falla a mitad de camino,
+     * no puede quedar el partido cerrado con la mitad de las apuestas sin pagar.
+     */
+    public function close(Request $request) {
+
+        Validator::make($request->all(),
+        [
+            'match_id'   => 'required|exists:matches,id',
+            'home_goals' => 'required|integer|min:0|max:99',
+            'away_goals' => 'required|integer|min:0|max:99',
+        ],
+        [
+            'match_id.required'   => 'El partido es requerido',
+            'match_id.exists'     => 'El id dado no existe',
+            'home_goals.required' => 'Los goles del local son requeridos',
+            'home_goals.integer'  => 'Los goles del local deben ser un número entero',
+            'home_goals.min'      => 'Los goles del local no pueden ser negativos',
+            'home_goals.max'      => 'Los goles del local no pueden ser más de :max',
+            'away_goals.required' => 'Los goles del visitante son requeridos',
+            'away_goals.integer'  => 'Los goles del visitante deben ser un número entero',
+            'away_goals.min'      => 'Los goles del visitante no pueden ser negativos',
+            'away_goals.max'      => 'Los goles del visitante no pueden ser más de :max',
+        ])->validate();
+
+        $homeGoals = (int) $request->home_goals;
+        $awayGoals = (int) $request->away_goals;
+
+        try {
+
+            $summary = DB::transaction(function () use ($request, $homeGoals, $awayGoals) {
+
+                // lockForUpdate: si dos administradores cierran al mismo tiempo,
+                // el segundo espera y despues ve el partido ya finalizado.
+                $match = GameMatch::lockForUpdate()->find($request->match_id);
+
+                // 1. Primer cinturon contra el doble pago: un partido
+                //    finalizado ya resolvio sus apuestas.
+                if ($match->status === GameMatch::FINISHED) {
+                    throw new Exception('Este partido ya fue cerrado y sus apuestas resueltas.');
+                }
+
+                if (!$match->is_active) {
+                    throw new Exception('El partido no existe.');
+                }
+
+                // 2. Marcador y estado final
+                $match->home_goals = $homeGoals;
+                $match->away_goals = $awayGoals;
+                $match->status     = GameMatch::FINISHED;
+                $match->save();
+
+                // 3. Cual de los tres resultados gano
+                if ($homeGoals > $awayGoals) {
+                    $winner = Bet::HOME;
+                } elseif ($homeGoals < $awayGoals) {
+                    $winner = Bet::AWAY;
+                } else {
+                    $winner = Bet::DRAW;
+                }
+
+                // 4. Segundo cinturon: solo las apuestas PENDIENTES de este
+                //    partido. Una apuesta ya resuelta no vuelve a entrar.
+                $bets = Bet::where('match_id', '=', $match->id)
+                           ->where('status', '=', Bet::PENDING)
+                           ->with('user')
+                           ->get();
+
+                $won = 0;
+                $paid = 0;
+
+                foreach ($bets as $bet) {
+
+                    if ($bet->pick === $winner) {
+
+                        // Paga la cuota CONGELADA al apostar, no la actual del partido
+                        $payout = $bet->potentialPayout();
+
+                        $bet->status = Bet::WON;
+                        $bet->user->balance += $payout;
+                        $bet->user->save();
+
+                        $won++;
+                        $paid += $payout;
+
+                    } else {
+
+                        // El monto ya se desconto al apostar: no hay nada que cobrar
+                        $bet->status = Bet::LOST;
+                    }
+
+                    $bet->save();
+                }
+
+                return [
+                    'resolved' => $bets->count(),
+                    'won'      => $won,
+                    'paid'     => $paid,
+                ];
+            });
+
+            $paid = number_format($summary['paid'], 0, ',', '.');
+
+            Session::flash('message', [
+                'content' => "Partido cerrado {$homeGoals} - {$awayGoals}. "
+                           . "Apuestas resueltas: {$summary['resolved']}. "
+                           . "Ganadoras: {$summary['won']}. "
+                           . "FutCoins pagados: {$paid}.",
+                'type'    => 'success',
+            ]);
+
+            return redirect()->route('matches.show', $request->match_id);
+
+        } catch(Exception $ex) {
+
+            Log::error($ex);
+
+            // Los mensajes de las guardas se le muestran tal cual al administrador
+            $content = in_array($ex->getMessage(), [
+                'Este partido ya fue cerrado y sus apuestas resueltas.',
+                'El partido no existe.',
+            ], true) ? $ex->getMessage() : "Ha ocurrido un error.";
+
+            Session::flash('message', [ 'content' => $content, 'type' => 'error' ]);
+            return redirect()->route('matches.show', $request->match_id);
         }
     }
 

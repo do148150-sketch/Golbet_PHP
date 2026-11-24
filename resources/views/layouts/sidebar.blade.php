@@ -54,16 +54,13 @@
             </li>
         @endif
 
-        {{-- NICO: esta entrada apunta a 'profile.show' (Mi Perfil).
-             Queda comentada hasta que exista esa ruta. --}}
-        {{--
+        {{-- Mi Perfil: cualquier usuario autenticado ve el suyo, sin permiso --}}
         <li class="nav-item">
             <a class="nav-link collapsed" href="{{ route('profile.show') }}">
                 <i class="bi bi-person-circle"></i>
                 <span>Mi Perfil</span>
             </a>
         </li>
-        --}}
 
     </ul>
 

@@ -9,3 +9,4 @@ include('auth.php');
 include('web/teams.php');
 include('web/users.php');
 include('web/matches.php');
+include('web/profile.php');

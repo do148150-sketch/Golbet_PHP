@@ -45,6 +45,12 @@
                     <button class="btn btn-primary w-100" type="submit">Ingresar</button>
                 </div>
 
+                <div class="col-12 text-center small">
+                    <a href="{{ route('password.request') }}">¿Olvidaste tu contraseña?</a>
+                    <br />
+                    ¿No tienes cuenta? <a href="{{ route('register') }}">Regístrate</a>
+                </div>
+
             </form>
 
         </div>

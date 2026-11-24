@@ -18,6 +18,11 @@ Route::get('/matches/edit/{id}' , [MatchesController::class, 'edit'])
      ->name('matches.edit')
      ->middleware(AuthorizedMiddleware::class . ':matches.update');
 
+// Registrar el marcador final y cerrar el partido: resuelve sus apuestas
+Route::get('/matches/close/{id}' , [MatchesController::class, 'closeForm'])
+     ->name('matches.closeForm')
+     ->middleware(AuthorizedMiddleware::class . ':matches.close');
+
 // Va de ultimo entre los GET: si estuviera antes, '/matches/create'
 // entraria aqui tomando 'create' como si fuera un id.
 Route::get('/matches/{id}' , [MatchesController::class, 'show'])
@@ -31,6 +36,10 @@ Route::post('/matches/store' , [MatchesController::class, 'store'])
 Route::put('/matches/update' , [MatchesController::class, 'update'])
      ->name('matches.update')
      ->middleware(AuthorizedMiddleware::class . ':matches.update');
+
+Route::post('/matches/close' , [MatchesController::class, 'close'])
+     ->name('matches.close')
+     ->middleware(AuthorizedMiddleware::class . ':matches.close');
 
 Route::delete('/matches/delete/{id}' , [MatchesController::class, 'delete'])
      ->name('matches.delete')
