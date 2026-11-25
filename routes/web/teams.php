@@ -18,6 +18,11 @@ Route::get('/teams/edit/{id}' , [TeamsController::class, 'edit'])
      ->name('teams.edit')
      ->middleware(AuthorizedMiddleware::class . ':teams.update');
 
+//aqui
+Route::get('/teams/{id}' , [TeamsController::class, 'show'])
+     ->name('teams.show')
+     ->middleware(AuthorizedMiddleware::class . ':teams.show');
+
 Route::post('/teams/store' , [TeamsController::class, 'store'])
      ->name('teams.store')
      ->middleware(AuthorizedMiddleware::class . ':teams.create');

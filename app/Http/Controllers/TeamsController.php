@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GameMatch; //este
 use App\Models\Team;
 use Exception;
 use Illuminate\Http\Request;
@@ -21,6 +22,32 @@ class TeamsController extends Controller
     public function create() {
 
         return view('teams/create');
+    }
+
+        public function show($id) {
+
+        $team = Team::find($id);
+
+        // Un equipo eliminado (borrado logico) tampoco se muestra
+        if (empty($team) || !$team->is_active) {
+
+            Session::flash('message', [ 'content' => "El equipo con id '$id' no existe.", 'type' => 'error' ]);
+            return redirect()->route('teams.index');
+        }
+
+        // Proximos partidos: los que juega de local o de visitante
+        // y que todavia no han terminado, del mas cercano al mas lejano.
+        $matches = GameMatch::with(['homeTeam', 'awayTeam'])
+                            ->where('is_active', true)
+                            ->where('status', '!=', GameMatch::FINISHED)
+                            ->where(function ($query) use ($team) {
+                                $query->where('home_team_id', $team->id)
+                                      ->orWhere('away_team_id', $team->id);
+                            })
+                            ->orderBy('match_date')
+                            ->get();
+
+        return view('teams/show', [ 'team' => $team, 'matches' => $matches ]);
     }
 
     public function edit($id) {

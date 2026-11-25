@@ -52,6 +52,9 @@
                                 <td>{{ $team->name }}</td>
                                 <td>{{ $team->city }}</td>
                                 <td>
+                                    <a href="{{ route('teams.show', $team->id) }}" class="btn btn-primary">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </a>
                                     <a href="{{ route('teams.edit', $team->id) }}" class="btn btn-warning">
                                         <i class="bi bi-pencil-fill"></i>
                                     </a>
