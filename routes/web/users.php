@@ -19,6 +19,11 @@ Route::get('/users/edit/{id}' , [UsersController::class, 'edit'])
      ->name('users.edit')
      ->middleware(AuthorizedMiddleware::class . ':users.update');
 
+// Va
+Route::get('/users/{id}' , [UsersController::class, 'show'])
+     ->name('users.show')
+     ->middleware(AuthorizedMiddleware::class . ':users.show');
+
 Route::post('/users/store' , [UsersController::class, 'store'])
      ->name('users.store')
      ->middleware(AuthorizedMiddleware::class . ':users.create');
@@ -26,3 +31,7 @@ Route::post('/users/store' , [UsersController::class, 'store'])
 Route::put('/users/update' , [UsersController::class, 'update'])
      ->name('users.update')
      ->middleware(AuthorizedMiddleware::class . ':users.update');
+
+Route::delete('/users/deactivate/{id}' , [UsersController::class, 'deactivate'])
+     ->name('users.deactivate')
+     ->middleware(AuthorizedMiddleware::class . ':users.delete');

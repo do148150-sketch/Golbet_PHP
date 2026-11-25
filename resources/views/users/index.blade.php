@@ -48,6 +48,9 @@
                                 <td>{{ $user->email }}</td>
                                 <td>{{ $user->role_name ?? 'Sin rol' }}</td>
                                 <td>
+                                    <a href="{{ route('users.show', $user->id) }}" class="btn btn-primary">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </a>
                                     <a href="{{ route('users.edit', $user->id) }}" class="btn btn-warning">
                                         <i class="bi bi-pencil-fill"></i>
                                     </a>

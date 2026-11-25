@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
@@ -19,6 +20,7 @@ class UsersController extends Controller
         // leftJoin: si algun usuario no tiene rol, igual aparece en la lista.
         $users = User::leftJoin('roles', 'roles.id', '=', 'users.role_id')
                      ->select('users.id', 'users.name', 'users.email', 'roles.name as role_name')
+                     ->where('users.is_active', true)
                      ->orderBy('users.name')
                      ->get();
 
@@ -30,6 +32,22 @@ class UsersController extends Controller
         $roles = Role::all();
 
         return view('users/create', [ 'roles' => $roles ]);
+    }
+
+    public function show($id) {
+
+        $user = User::with('role')->find($id);
+
+        if (empty($user)) {
+
+            Session::flash('message', [ 'content' => "El usuario con id '$id' no existe.", 'type' => 'error' ]);
+            return redirect()->route('users.index');
+        }
+
+        return view('users/show', [
+            'user'      => $user,
+            'totalBets' => $user->bets()->count(),
+        ]);
     }
 
     public function edit($id) {
@@ -128,6 +146,43 @@ class UsersController extends Controller
             $user->save();
 
             Session::flash('message', [ 'content' => "Usuario actualizado con éxito", 'type' => 'success' ]);
+            return redirect()->route('users.index');
+
+        } catch(Exception $ex) {
+
+            Log::error($ex);
+            Session::flash('message', [ 'content' => "Ha ocurrido un error.", 'type' => 'error' ]);
+            return redirect()->back();
+        }
+    }
+
+
+    public function deactivate($id) {
+
+        try {
+
+            $user = User::find($id);
+
+            if (empty($user)) {
+
+                Session::flash('message', [ 'content' => "El usuario con id '$id' no existe.", 'type' => 'error' ]);
+                return redirect()->back();
+            }
+
+            // El administrador no se puede desactivar a si mismo:
+            // se quedaria por fuera del sistema sin nadie que lo reactive.
+            if ($user->id === Auth::id()) {
+
+                Session::flash('message', [ 'content' => "No puedes desactivar tu propio usuario.", 'type' => 'error' ]);
+                return redirect()->back();
+            }
+
+            // Borrado logico, igual que en equipos: el usuario no se destruye,
+            // se marca como inactivo y deja de aparecer en el listado.
+            $user->is_active = false;
+            $user->save();
+
+            Session::flash('message', [ 'content' => "Usuario desactivado con éxito", 'type' => 'success' ]);
             return redirect()->route('users.index');
 
         } catch(Exception $ex) {
