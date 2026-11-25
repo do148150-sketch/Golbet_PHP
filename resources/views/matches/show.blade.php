@@ -2,6 +2,7 @@
 
 @use('App\Helpers\RoleHelper')
 @use('App\Models\GameMatch')
+@use('App\Models\Bet')
 
 @section('content')
     <div class="pagetitle">
@@ -100,12 +101,56 @@
 
                 </div>
 
-                {{-- ===================================================
-                     SANTI: aquí va el formulario para realizar la apuesta.
-                     Condición: $match->acceptsBets() && RoleHelper::can('bets.create')
-                     El método acceptsBets() del modelo ya comprueba que el
-                     partido esté Programado y que la fecha no haya pasado.
-                     =================================================== --}}
+                                {{-- Formulario para apostar: solo si el partido admite apuestas
+                     y el usuario tiene permiso. El controlador lo vuelve a validar. --}}
+                @if ($match->acceptsBets() && RoleHelper::can('bets.create'))
+
+                    <hr />
+
+                    <h5 class="text-center mb-3">Realizar apuesta</h5>
+
+                    <form action="{{ route('bets.store') }}" method="POST" class="row g-3 justify-content-center">
+                        @csrf
+
+                        <input type="hidden" name="match_id" value="{{ $match->id }}" />
+
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                <select name="pick" class="form-select">
+                                    <option value="">Seleccione...</option>
+                                    <option value="{{ Bet::HOME }}" @selected(old('pick') == Bet::HOME)>
+                                        1 · Gana {{ $match->homeTeam->name }} ({{ number_format($match->home_odds, 2) }})
+                                    </option>
+                                    <option value="{{ Bet::DRAW }}" @selected(old('pick') == Bet::DRAW)>
+                                        X · Empate ({{ number_format($match->draw_odds, 2) }})
+                                    </option>
+                                    <option value="{{ Bet::AWAY }}" @selected(old('pick') == Bet::AWAY)>
+                                        2 · Gana {{ $match->awayTeam->name }} ({{ number_format($match->away_odds, 2) }})
+                                    </option>
+                                </select>
+                                <label for="">Pronóstico</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-floating">
+                                <input type="number" name="amount" class="form-control" min="1" step="1"
+                                       placeholder="Monto" value="{{ old('amount') }}" />
+                                <label for="">Monto (FutCoins)</label>
+                            </div>
+                            <small class="text-muted">
+                                Tu saldo: {{ number_format(Auth::user()->balance, 0, ',', '.') }} FutCoins
+                            </small>
+                        </div>
+
+                        <div class="col-md-2 d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-cash-coin"></i> Apostar
+                            </button>
+                        </div>
+                    </form>
+
+                @endif
 
             </div>
 

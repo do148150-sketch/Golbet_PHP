@@ -31,10 +31,6 @@
             </li>
         @endif
 
-        {{-- SANTI: esta entrada apunta a 'bets.index' (Mis Apuestas).
-             Queda comentada hasta que exista esa ruta; al crearla,
-             basta con descomentarla. --}}
-        {{--
         @if (RoleHelper::can('bets.show'))
             <li class="nav-item">
                 <a class="nav-link collapsed" href="{{ route('bets.index') }}">
@@ -43,7 +39,6 @@
                 </a>
             </li>
         @endif
-        --}}
 
         @if (RoleHelper::can('users.show'))
             <li class="nav-item">
