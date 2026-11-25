@@ -165,6 +165,16 @@
 
         </li><!-- End Messages Nav -->
 
+                {{-- Saldo de FutCoins del usuario de la sesion, visible en todas las pantallas --}}
+        @auth
+          <li class="nav-item pe-3">
+            <span class="badge bg-success fs-6">
+              <i class="bi bi-coin"></i>
+              {{ number_format(Auth::user()->balance, 0, ',', '.') }} FutCoins
+            </span>
+          </li>
+        @endauth
+
         <li class="nav-item dropdown pe-3">
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
